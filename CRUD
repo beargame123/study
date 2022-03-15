@@ -1,1 +1,440 @@
-https://www.notion.so/CRUD-32a1d384cd9441fc9d5ad3fd7b2f3600
+[게시판 API ](https://www.notion.so/4d3ffd9f1e3f491ab1ef14b85f1035fe)
+
+## 내가만든 코드들
+
+- **Controller** : UserController
+    
+    ```json
+    package com.example.test.controller;
+    
+    import com.example.test.dto.User;
+    import com.example.test.entity.UserEntity;
+    import com.example.test.service.UserServiceImpl;
+    import lombok.RequiredArgsConstructor;
+    import org.springframework.web.bind.annotation.*;
+    
+    import java.util.List;
+    import java.util.Optional;
+    
+    @RestController
+    @RequestMapping("")
+    @RequiredArgsConstructor
+    public class UserController {
+    
+        private final UserServiceImpl userService;
+    
+        //글 전체보기
+        @GetMapping("/user")
+        public List<UserEntity> Usersee(){
+            return userService.Usersee();
+        }
+    
+        //글 선택보기
+        @GetMapping("/user/{id}") //어노테이션들은 service에서 안써도 된다.
+        public Optional<UserEntity> Userfiltersee(@PathVariable Long id){ 
+            return userService.Userfiltersee(id);
+        }
+    
+        //글 등록
+        @PostMapping("/user")
+        public String Usercreate(@RequestBody UserEntity userEntity){
+            return userService.usercreate(userEntity);
+        }
+    
+        //글 삭제
+        @DeleteMapping("/user/{id}")
+        public String Userdel(@PathVariable Long id) {
+            return userService.Userdel(id);
+        }
+    
+        // 글 수정
+        @PatchMapping("/user/{id}")
+        public String Userupload(@PathVariable("id") Long id, @RequestBody User user){
+            return userService.Userupload(id, user);
+        }
+    }
+    ```
+    
+- **DTO** : User
+    
+    ```json
+    package com.example.test.dto;
+    
+    import com.example.test.entity.UserEntity;
+    import lombok.Builder;
+    import lombok.Getter;
+    import lombok.NoArgsConstructor;
+    import lombok.Setter;
+    
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    public class User {
+        private String title;
+        private String content;
+    
+    }
+    ```
+    
+- **Entity** : ****UserEntity
+    
+    ```json
+    package com.example.test.entity;
+    
+    import lombok.Builder;
+    import lombok.Getter;
+    import lombok.NoArgsConstructor;
+    
+    import javax.persistence.Column;
+    import javax.persistence.Entity;
+    import javax.persistence.GeneratedValue;
+    import javax.persistence.Id;
+    
+    @Entity
+    @Getter
+    @NoArgsConstructor
+    public class UserEntity {
+        @Id
+        @GeneratedValue
+        private Long id;
+    
+        @Column
+        private String title;
+    
+        @Column
+        private String content;
+    
+        public void setContent(String content) {
+            this.content = content;
+        }
+    
+        public void setTitle(String title) {
+            this.title = title;
+        }
+    }
+    ```
+    
+- **repository** : UserRepository
+    
+    ```json
+    package com.example.test.repository;
+    
+    import com.example.test.entity.UserEntity;
+    import org.springframework.data.jpa.repository.JpaRepository;
+    
+    public interface UserRepository extends JpaRepository<UserEntity, Long>{
+    }
+    ```
+    
+- **Service interface** : UserService
+    
+    ```json
+    package com.example.test.service;
+    
+    import com.example.test.dto.User;
+    import com.example.test.entity.UserEntity;
+    import org.springframework.web.bind.annotation.PathVariable;
+    import org.springframework.web.bind.annotation.RequestBody;
+    
+    import java.util.List;
+    import java.util.Optional;
+    
+    public interface UserService {
+    
+        //글 등록
+        String usercreate(UserEntity userEntity);
+    
+        //글 전체보기
+        List<UserEntity> Usersee();
+    
+        //글 선택하여 보기
+        Optional<UserEntity> Userfiltersee(Long id);
+    
+        //글 삭제
+        String Userdel(Long id);
+    
+        //글 수정
+        String Userupload(Long id, User user);
+    }
+    ```
+    
+- **Service** : UserServiceIMPL
+    
+    ```json
+    package com.example.test.service;
+    
+    import com.example.test.dto.User;
+    import com.example.test.entity.UserEntity;
+    import com.example.test.repository.UserRepository;
+    import lombok.AllArgsConstructor;
+    import org.springframework.stereotype.Service;
+    import org.springframework.web.bind.annotation.PathVariable;
+    import org.springframework.web.bind.annotation.RequestBody;
+    
+    import javax.transaction.Transactional;
+    import java.util.List;
+    import java.util.Optional;
+    
+    @Service
+    @AllArgsConstructor
+    public class UserServiceImpl implements UserService{
+        private final UserRepository userRepository;
+    
+        // 글등록
+        @Override
+        public String usercreate(@RequestBody UserEntity userEntity){
+            userRepository.save(userEntity);
+            return "글이 등록되었습니다!";
+        }
+    
+        //글 전체보기
+        @Override
+        public List<UserEntity> Usersee(){
+            return userRepository.findAll();
+        }
+    
+        //글 선택해서보기
+        @Override
+        public Optional<UserEntity> Userfiltersee(@PathVariable Long id){
+            return userRepository.findById(id);
+        }
+    
+        //글 삭제
+        @Override
+        public String Userdel(@PathVariable Long id) {
+            userRepository.deleteById(id);
+            return ""+id+"번째 글이 삭제되었습니다!";
+        }
+    
+        //글 수정
+        @Override
+        @Transactional
+        public String Userupload(@PathVariable("id") Long id, @RequestBody User user){
+            UserEntity userEntity = userRepository.findById(id).get();
+            userEntity.setTitle(user.getTitle());
+            userEntity.setContent(user.getContent());
+            return ""+id+"번째 글이 수정되었습니다!";
+        }
+    }
+    ```
+    
+
+---
+
+## 선배한테 조언받고 바꾼코드들
+
+- **Controller** : UserController
+    
+    ```json
+    package com.example.test.controller;
+    
+    import com.example.test.dto.User;
+    import com.example.test.entity.UserEntity;
+    import com.example.test.service.UserServiceImpl;
+    import lombok.RequiredArgsConstructor;
+    import org.springframework.web.bind.annotation.*;
+    
+    import java.util.List;
+    import java.util.Optional;
+    
+    @RestController
+    @RequestMapping("/user") //중복된 url을 한번에 정리할때 쓰자!
+    @RequiredArgsConstructor
+    public class UserController {
+    
+        private final UserServiceImpl userService;
+    
+        //글 전체보기
+        @GetMapping("")
+        public List<UserEntity> userSee(){
+            return userService.userSee(); //클래스 이름은 대문자 메소드는 소문자!
+        }
+    
+        //글 선택보기
+        @GetMapping("{id}")
+        public Optional<UserEntity> userFiltersee(@PathVariable Long id){
+            return userService.userFiltersee(id);
+        }
+    
+        //글 등록
+        @PostMapping("")
+        public String userCreate(@RequestBody UserEntity userEntity){
+            return userService.userCreate(userEntity);
+        }
+    
+        //글 삭제
+        @DeleteMapping("{id}")
+        public String userDel(@PathVariable Long id) {
+            return userService.userDel(id);
+        }
+    
+        // 글 수정
+        @PatchMapping("{id}")
+        public String userUpload(@PathVariable("id") Long id, @RequestBody User user){
+            return userService.userUpload(id, user);
+        }
+    }
+    ```
+    
+- **DTO** : User
+    
+    ```json
+    package com.example.test.dto;
+    
+    import com.example.test.entity.UserEntity;
+    import lombok.Builder;
+    import lombok.Getter;
+    import lombok.NoArgsConstructor;
+    import lombok.Setter;
+    
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    public class User {
+        private String title;
+        private String content;
+    
+    }
+    ```
+    
+- **Entity** : ****UserEntity
+    
+    ```json
+    package com.example.test.entity;
+    
+    import lombok.Builder;
+    import lombok.Getter;
+    import lombok.NoArgsConstructor;
+    
+    import javax.persistence.Column;
+    import javax.persistence.Entity;
+    import javax.persistence.GeneratedValue;
+    import javax.persistence.Id;
+    
+    @Entity
+    @Getter
+    @NoArgsConstructor
+    public class UserEntity {
+        @Id
+        @GeneratedValue
+        private Long id;
+    
+        @Column
+        private String title;
+    
+        @Column
+        private String content;
+    
+        public void setContent(String content) {
+            this.content = content;
+        }
+    
+        public void setTitle(String title) {
+            this.title = title;
+        }
+    }
+    ```
+    
+- **repository** : UserRepository
+    
+    ```json
+    package com.example.test.repository;
+    
+    import com.example.test.entity.UserEntity;
+    import org.springframework.data.jpa.repository.JpaRepository;
+    
+    public interface UserRepository extends JpaRepository<UserEntity, Long>{
+    }
+    ```
+    
+- **Service interface** : UserService
+    
+    ```json
+    package com.example.test.service;
+    
+    import com.example.test.dto.User;
+    import com.example.test.entity.UserEntity;
+    import org.springframework.web.bind.annotation.PathVariable;
+    import org.springframework.web.bind.annotation.RequestBody;
+    
+    import java.util.List;
+    import java.util.Optional;
+    
+    public interface UserService {
+    
+        //글 등록
+        String usercreate(@RequestBody UserEntity userEntity);
+    
+        //글 전체보기
+        List<UserEntity> Usersee();
+    
+        //글 선택하여 보기
+        Optional<UserEntity> Userfiltersee(@PathVariable Long id);
+    
+        //글 삭제
+        String Userdel(@PathVariable Long id);
+    
+        //글 수정
+        String Userupload(@PathVariable("id") Long id, @RequestBody User user);
+    }
+    ```
+    
+- **Service** : UserServiceIMPL
+    
+    ```json
+    package com.example.test.service;
+    
+    import com.example.test.dto.User;
+    import com.example.test.entity.UserEntity;
+    import com.example.test.repository.UserRepository;
+    import lombok.AllArgsConstructor;
+    import org.springframework.stereotype.Service;
+    import org.springframework.web.bind.annotation.PathVariable;
+    import org.springframework.web.bind.annotation.RequestBody;
+    
+    import javax.transaction.Transactional;
+    import java.util.List;
+    import java.util.Optional;
+    
+    @Service
+    @AllArgsConstructor
+    public class UserServiceImpl implements UserService{
+        private final UserRepository userRepository;
+    
+        // 글등록
+        @Override
+        public String userCreate(UserEntity userEntity){
+            userRepository.save(userEntity);
+            return "글이 등록되었습니다!";
+        }
+    
+        //글 전체보기
+        @Override
+        public List<UserEntity> userSee(){
+            return userRepository.findAll();
+        }
+    
+        //글 선택해서보기
+        @Override
+        public Optional<UserEntity> userFiltersee(Long id){
+            return userRepository.findById(id);
+        }
+    
+        //글 삭제
+        @Override
+        public String userDel(Long id) {
+            userRepository.deleteById(id);
+            return ""+id+"번째 글이 삭제되었습니다!";
+        }
+    
+        //글 수정
+        @Override
+        @Transactional
+        public String userUpload(Long id, User user){
+            UserEntity userEntity = userRepository.findById(id).get();
+            userEntity.setTitle(user.getTitle());
+            userEntity.setContent(user.getContent());
+            return ""+id+"번째 글이 수정되었습니다!";
+        }
+    }
+    ```
